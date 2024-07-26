@@ -21,4 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "VRG_SOFT_test_task"
 include(":app")
- 
+include(":network")
+include(":domain")
+include(":data")

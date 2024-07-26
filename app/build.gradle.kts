@@ -65,4 +65,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+
+    implementation (project(":network"))
+    implementation (project(":domain"))
+    implementation (project(":data"))
 }

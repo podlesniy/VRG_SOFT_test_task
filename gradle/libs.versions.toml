@@ -46,4 +46,5 @@ jetbrains-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", versi
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 
