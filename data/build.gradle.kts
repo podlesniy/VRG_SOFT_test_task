@@ -43,6 +43,10 @@ dependencies {
 
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    implementation (libs.glide)
+    annotationProcessor(libs.compiler)
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.common)
 
     implementation(project(":domain"))
 }
