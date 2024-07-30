@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">VRG_SOFT_test_task</string>
+    <string name="empty_placeholder">There is no internet or connection to the server. \nPlease try again later.</string>
 </resources>

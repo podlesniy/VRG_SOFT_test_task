@@ -6,7 +6,7 @@ import retrofit2.HttpException
 import ua.czrblz.data.api.ApiService
 import ua.czrblz.domain.model.RedditChildren
 
-const val POSTS_LIMIT = 20
+const val POSTS_LIMIT = 10
 class PostsPagingSource(
     private val apiService: ApiService,
 ): PagingSource<String, RedditChildren>() {

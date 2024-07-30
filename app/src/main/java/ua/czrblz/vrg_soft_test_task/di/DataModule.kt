@@ -27,7 +27,7 @@ val dataModule = module {
         )
     }
 
-    single<ApiService>() {
+    single<ApiService> {
         NetworkAdapter().retrofit.create(ApiService::class.java)
     }
 }

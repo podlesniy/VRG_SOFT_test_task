@@ -18,7 +18,6 @@ import ua.czrblz.vrg_soft_test_task.databinding.ActivityMainBinding
 import ua.czrblz.vrg_soft_test_task.listener.OpenPictureListener
 import ua.czrblz.vrg_soft_test_task.listener.SavePictureListener
 
-
 class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListener {
 
     private lateinit var binding: ActivityMainBinding
@@ -36,23 +35,32 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
         setContentView(binding.root)
         window.statusBarColor = Color.BLACK
 
-        binding.rvPosts.apply {
-            adapter = postAdapter
-            layoutManager = LinearLayoutManager(this@MainActivity)
-        }
+        with(binding) {
+            rvPosts.apply {
+                adapter = postAdapter
+                layoutManager = LinearLayoutManager(this@MainActivity)
+            }
 
-        lifecycleScope.launch {
-            viewModel.data.collect {
-                it?.let {
-                    postAdapter.submitData(it)
+            lifecycleScope.launch {
+                viewModel.data.collect {
+                    it?.let {
+                        postAdapter.submitData(it)
+                    }
                 }
             }
-        }
 
-        lifecycleScope.launch {
-            postAdapter.loadStateFlow.collect {
-                val state = it.refresh
-                binding.progress.isVisible = state is LoadState.Loading
+            lifecycleScope.launch {
+                postAdapter.loadStateFlow.collect {
+                    val state = it.refresh
+                    progress.isVisible = state is LoadState.Loading
+                    emptyPlaceholder.isVisible =
+                        state is LoadState.Error && postAdapter.itemCount == 0
+                }
+            }
+
+            swipeLayout.setOnRefreshListener {
+                swipeLayout.isRefreshing = false
+                postAdapter.refresh()
             }
         }
     }
