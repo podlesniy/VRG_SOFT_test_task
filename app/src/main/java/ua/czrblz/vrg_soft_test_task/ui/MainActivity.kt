@@ -1,7 +1,12 @@
-package ua.czrblz.vrg_soft_test_task
+package ua.czrblz.vrg_soft_test_task.ui
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.ConnectivityManager.CONNECTIVITY_ACTION
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -11,12 +16,15 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import ua.czrblz.vrg_soft_test_task.MainViewModel
 import ua.czrblz.vrg_soft_test_task.adapter.PostsAdapter
 import ua.czrblz.vrg_soft_test_task.databinding.ActivityMainBinding
 import ua.czrblz.vrg_soft_test_task.listener.OpenPictureListener
 import ua.czrblz.vrg_soft_test_task.listener.SavePictureListener
+import ua.czrblz.vrg_soft_test_task.utils.hasNetworkConnection
 
 class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListener {
 
@@ -24,6 +32,14 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
     private val viewModel: MainViewModel by viewModel()
 
     private val postAdapter by lazy(LazyThreadSafetyMode.NONE) { PostsAdapter(this, this) }
+    lateinit var currentLayoutManager: LinearLayoutManager
+
+    private val internetConnectionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (context.hasNetworkConnection())
+                postAdapter.retry()
+        }
+    }
 
     companion object {
         const val REQUEST_CODE = 123
@@ -34,11 +50,21 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         window.statusBarColor = Color.BLACK
-
+        currentLayoutManager = LinearLayoutManager(this@MainActivity)
         with(binding) {
             rvPosts.apply {
                 adapter = postAdapter
-                layoutManager = LinearLayoutManager(this@MainActivity)
+                layoutManager = currentLayoutManager
+                addOnScrollListener(object: RecyclerView.OnScrollListener() {
+                    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                        scrollToStart.apply {
+                            isVisible = currentLayoutManager.findLastVisibleItemPosition() > 15
+                            setOnClickListener {
+                                rvPosts.smoothScrollToPosition(0)
+                            }
+                        }
+                    }
+                })
             }
 
             lifecycleScope.launch {
@@ -63,6 +89,7 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
                 postAdapter.refresh()
             }
         }
+        registerReceiver(internetConnectionReceiver, IntentFilter(CONNECTIVITY_ACTION))
     }
 
     override fun openPicture(imageUrl: String, thumbnailUrl: String) {
@@ -99,5 +126,10 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
                 Toast.makeText(this, "Something went wrong while loading, try again later!", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        registerReceiver(internetConnectionReceiver, IntentFilter(CONNECTIVITY_ACTION))
     }
 }

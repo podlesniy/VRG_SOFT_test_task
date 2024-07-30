@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:padding="16dp"
     android:orientation="vertical"
-    tools:context=".PictureDialogFragment">
+    tools:context=".ui.PictureDialogFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,6 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="start"
+            android:padding="4dp"
             android:background="@drawable/button_bg"
             android:src="@drawable/ic_download" />
 
@@ -30,6 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
+            android:padding="4dp"
             android:background="@drawable/button_bg"
             android:src="@drawable/ic_close" />
 

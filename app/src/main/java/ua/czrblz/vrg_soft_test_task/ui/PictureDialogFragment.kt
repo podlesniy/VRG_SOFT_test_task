@@ -1,4 +1,4 @@
-package ua.czrblz.vrg_soft_test_task
+package ua.czrblz.vrg_soft_test_task.ui
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import androidx.fragment.app.DialogFragment
-import timber.log.Timber
 import ua.czrblz.vrg_soft_test_task.utils.loadPictureInLargeFormat
 import ua.czrblz.vrg_soft_test_task.databinding.FragmentPictureDialogBinding
 import ua.czrblz.vrg_soft_test_task.listener.SavePictureListener
