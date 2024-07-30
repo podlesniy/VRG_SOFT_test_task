@@ -4,14 +4,18 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import ua.czrblz.data.utils.loadPictureThumbnail
 import ua.czrblz.domain.model.RedditChildren
 import ua.czrblz.vrg_soft_test_task.R
+import ua.czrblz.vrg_soft_test_task.listener.PictureListener
+import ua.czrblz.vrg_soft_test_task.utils.convertTimestamp
 
-class PostsAdapter(context: Context) : PagingDataAdapter<RedditChildren, PostViewHolder>(PostDiffCallback) {
+class PostsAdapter(context: Context, private val pictureListener: PictureListener) : PagingDataAdapter<RedditChildren, PostViewHolder>(PostDiffCallback) {
 
     private val layoutInflater: LayoutInflater = LayoutInflater.from(context)
 
@@ -23,14 +27,29 @@ class PostsAdapter(context: Context) : PagingDataAdapter<RedditChildren, PostVie
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = getItem(position)
         if (post != null) {
-            holder.bind(post)
+            holder.bind(post, pictureListener)
         }
     }
 }
 
 class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    fun bind(post: RedditChildren) {
-        itemView.findViewById<TextView>(R.id.title_text).text = post.data.author
+
+    private val author = itemView.findViewById<TextView>(R.id.author)
+    private val timestamp = itemView.findViewById<TextView>(R.id.timestamp)
+    private val commentsCount = itemView.findViewById<TextView>(R.id.comments_count)
+    private val image = itemView.findViewById<ImageView>(R.id.imageView)
+
+    fun bind(post: RedditChildren, pictureListener: PictureListener) {
+        post.data.also { redditPost ->
+            author.text = redditPost.subreddit
+            timestamp.text = redditPost.created.convertTimestamp()
+            commentsCount.text = redditPost.num_comments.toString()
+            loadPictureThumbnail(image, redditPost.thumbnail)
+            image.setOnClickListener {
+                if (redditPost.thumbnail.split(".").last() == "jpg")
+                    pictureListener.openPicture(redditPost.thumbnail)
+            }
+        }
     }
 }
 
@@ -40,6 +59,6 @@ object PostDiffCallback : DiffUtil.ItemCallback<RedditChildren>() {
     }
 
     override fun areContentsTheSame(oldItem: RedditChildren, newItem: RedditChildren): Boolean {
-        return oldItem.data == newItem.data
+        return oldItem.data.name == newItem.data.name
     }
 }

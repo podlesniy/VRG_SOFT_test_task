@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    implementation(libs.ocpsoft.prettytime)
 
     implementation (project(":network"))
     implementation (project(":domain"))

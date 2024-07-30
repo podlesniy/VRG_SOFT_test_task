@@ -13,10 +13,9 @@ data class RedditChildren(
 )
 
 data class RedditPost(
-    val title: String,
-    val author: String,
     val subreddit: String,
-    val url: String,
+    val num_comments: Int,
+    val created: Long,
     val thumbnail: String,
     val name: String
 )
