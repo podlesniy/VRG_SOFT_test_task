@@ -64,6 +64,8 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.ocpsoft.prettytime)
+    implementation (libs.glide)
+    annotationProcessor(libs.compiler)
 
     implementation (project(":network"))
     implementation (project(":domain"))

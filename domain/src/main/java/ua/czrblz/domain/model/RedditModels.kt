@@ -17,5 +17,6 @@ data class RedditPost(
     val num_comments: Int,
     val created: Long,
     val thumbnail: String,
+    val url_overridden_by_dest: String,
     val name: String
 )

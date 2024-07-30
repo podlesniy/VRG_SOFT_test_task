@@ -9,13 +9,14 @@ import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import ua.czrblz.data.utils.loadPictureThumbnail
+import ua.czrblz.vrg_soft_test_task.utils.loadPictureThumbnail
 import ua.czrblz.domain.model.RedditChildren
 import ua.czrblz.vrg_soft_test_task.R
-import ua.czrblz.vrg_soft_test_task.listener.PictureListener
+import ua.czrblz.vrg_soft_test_task.listener.OpenPictureListener
 import ua.czrblz.vrg_soft_test_task.utils.convertTimestamp
+import ua.czrblz.vrg_soft_test_task.utils.listOfImageExtensions
 
-class PostsAdapter(context: Context, private val pictureListener: PictureListener) : PagingDataAdapter<RedditChildren, PostViewHolder>(PostDiffCallback) {
+class PostsAdapter(context: Context, private val openPictureListener: OpenPictureListener) : PagingDataAdapter<RedditChildren, PostViewHolder>(PostDiffCallback) {
 
     private val layoutInflater: LayoutInflater = LayoutInflater.from(context)
 
@@ -27,7 +28,7 @@ class PostsAdapter(context: Context, private val pictureListener: PictureListene
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = getItem(position)
         if (post != null) {
-            holder.bind(post, pictureListener)
+            holder.bind(post, openPictureListener)
         }
     }
 }
@@ -39,15 +40,15 @@ class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     private val commentsCount = itemView.findViewById<TextView>(R.id.comments_count)
     private val image = itemView.findViewById<ImageView>(R.id.imageView)
 
-    fun bind(post: RedditChildren, pictureListener: PictureListener) {
+    fun bind(post: RedditChildren, openPictureListener: OpenPictureListener) {
         post.data.also { redditPost ->
             author.text = redditPost.subreddit
             timestamp.text = redditPost.created.convertTimestamp()
             commentsCount.text = redditPost.num_comments.toString()
-            loadPictureThumbnail(image, redditPost.thumbnail)
+            image.loadPictureThumbnail(redditPost.thumbnail)
             image.setOnClickListener {
-                if (redditPost.thumbnail.split(".").last() == "jpg")
-                    pictureListener.openPicture(redditPost.thumbnail)
+                if (redditPost.thumbnail.split(".").last() in listOfImageExtensions)
+                    openPictureListener.openPicture(redditPost.url_overridden_by_dest, redditPost.thumbnail)
             }
         }
     }
