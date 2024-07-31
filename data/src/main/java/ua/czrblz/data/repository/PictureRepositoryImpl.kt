@@ -1,60 +1,68 @@
 package ua.czrblz.data.repository
 
+import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import ua.czrblz.domain.repository.PictureRepository
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 
 class PictureRepositoryImpl: PictureRepository {
 
     override fun savePictureToStorage(imageUrl: String, context: Context, onComplete: (String) -> Unit, onError: () -> Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpClient()
-            val request = Request.Builder()
-                .url(imageUrl)
-                .build()
-            val pictureName = imageUrl.split("/").last()
-            try {
-                val response = client.newCall(request).execute()
-                if (response.isSuccessful) {
-
-                    val body = response.body()
-                    val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), pictureName)
-                    val output = FileOutputStream(file)
-                    val input = body?.byteStream()
-                    val data = ByteArray(1024)
-                    var count: Int
-
-                    while (input?.read(data).also { count = it!! } != -1) {
-                        output.write(data, 0, count)
-                    }
-                    output.flush()
-                    output.close()
-                    input?.close()
-                    withContext(Dispatchers.Main) {
-                        onComplete.invoke(pictureName)
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
+        Glide.with(context)
+            .asBitmap()
+            .load(imageUrl)
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    val pictureName = imageUrl.split("/").last()
+                    saveBitmapToPictures(context, resource, pictureName, {
+                        onComplete.invoke(it)
+                    }) {
                         onError.invoke()
+                        Log.e("Download_error", "Error downloading")
                     }
-                    Log.e("Download_error", "HTTP request failed with code: ${response.code()}")
                 }
-            } catch (e: IOException) {
-                withContext(Dispatchers.Main) {
-                    onError.invoke()
+
+                override fun onLoadCleared(placeholder: Drawable?) {}
+            })
+    }
+
+    private fun saveBitmapToPictures(context: Context, bitmap: Bitmap?, imageName: String, onComplete: (String) -> Unit, onError: () -> Unit) {
+        try {
+            val imageMimeType = imageName.split(".").last()
+            val compressFormat = Bitmap.CompressFormat.entries.firstOrNull { it.name == imageMimeType }
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, imageName)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/$imageMimeType")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures")
+                } else {
+                    put(MediaStore.Images.Media.DATA, File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), imageName).absolutePath)
                 }
-                Log.e("Download_error", "Error downloading ${e.message}")
             }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+            uri?.let {
+                resolver.openOutputStream(it)?.use { outputStream ->
+                    bitmap?.compress(compressFormat ?: Bitmap.CompressFormat.JPEG, 100, outputStream)
+                    outputStream.flush()
+                    outputStream.close()
+                    return@let onComplete.invoke(imageName)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SavePictureError", "Error saving picture", e)
+            onError.invoke()
         }
     }
 }

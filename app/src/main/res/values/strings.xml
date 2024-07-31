@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">VRG_SOFT_test_task</string>
     <string name="empty_placeholder">There is no internet or connection to the server. \nPlease try again later.</string>
+    <string name="downloaded_file">%s is downloaded</string>
+    <string name="something_error">Something went wrong while loading, try again later!</string>
+    <string name="permissions_error">You need to grant permissions to the application!</string>
+    <string name="internet_error">Internet connection lost. Try switching to another network.</string>
 </resources>

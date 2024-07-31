@@ -1,5 +1,6 @@
 package ua.czrblz.vrg_soft_test_task.ui
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -7,10 +8,11 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.ConnectivityManager.CONNECTIVITY_ACTION
+import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -20,12 +22,15 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ua.czrblz.vrg_soft_test_task.MainViewModel
+import ua.czrblz.vrg_soft_test_task.R
 import ua.czrblz.vrg_soft_test_task.adapter.PostsAdapter
 import ua.czrblz.vrg_soft_test_task.databinding.ActivityMainBinding
 import ua.czrblz.vrg_soft_test_task.listener.OpenPictureListener
 import ua.czrblz.vrg_soft_test_task.listener.SavePictureListener
 import ua.czrblz.vrg_soft_test_task.utils.hasNetworkConnection
+import ua.czrblz.vrg_soft_test_task.utils.toast
 
+private const val SCROLL_UP_BUTTON_VISIBLE_ON_ITEM = 15
 class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListener {
 
     private lateinit var binding: ActivityMainBinding
@@ -38,17 +43,32 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
         override fun onReceive(context: Context, intent: Intent) {
             if (context.hasNetworkConnection())
                 postAdapter.retry()
+            else
+                toast(R.string.internet_error)
         }
     }
 
-    companion object {
-        const val REQUEST_CODE = 123
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        var numOfGrantedPermissions = 0
+        permissions.entries.forEach {
+            if (it.key in permissions && it.value) {
+                numOfGrantedPermissions++
+            }
+        }
+        if (numOfGrantedPermissions == permissions.size) {
+            savePictureIfGranted()
+        } else {
+            toast(R.string.permissions_error)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         window.statusBarColor = Color.BLACK
         currentLayoutManager = LinearLayoutManager(this@MainActivity)
         with(binding) {
@@ -58,7 +78,7 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
                 addOnScrollListener(object: RecyclerView.OnScrollListener() {
                     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                         scrollToStart.apply {
-                            isVisible = currentLayoutManager.findLastVisibleItemPosition() > 15
+                            isVisible = currentLayoutManager.findLastVisibleItemPosition() > SCROLL_UP_BUTTON_VISIBLE_ON_ITEM
                             setOnClickListener {
                                 rvPosts.smoothScrollToPosition(0)
                             }
@@ -68,9 +88,9 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
             }
 
             lifecycleScope.launch {
-                viewModel.data.collect {
-                    it?.let {
-                        postAdapter.submitData(it)
+                viewModel.data.collect { pagingData ->
+                    pagingData?.let { data ->
+                        postAdapter.submitData(data)
                     }
                 }
             }
@@ -98,32 +118,55 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
 
     override fun savePicture(imageUrl: String) {
         viewModel.updateImageUrl(imageUrl)
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_CODE)
-        } else {
-            savePictureIfGranted()
+        checkPermissions()
+    }
+
+    private fun checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            requestMediaPermissions()
+        else
+            requestLegacyPermissions()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun requestMediaPermissions() {
+        when {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED -> {
+                savePictureIfGranted()
+            }
+            else -> requestPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_AUDIO
+                )
+            )
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && !grantResults.contains(PackageManager.PERMISSION_DENIED)) {
-                    savePictureIfGranted()
-                } else {
-                    Toast.makeText(this, "You need to grant permissions to the application!", Toast.LENGTH_SHORT).show()
-                }
+    private fun requestLegacyPermissions() {
+        when {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED -> {
+                savePictureIfGranted()
             }
+            else -> requestPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+            )
         }
     }
 
     private fun savePictureIfGranted() {
         viewModel.currentImageUrl.value?.let { imageUrl ->
             viewModel.savePicture(imageUrl, { imageName ->
-                Toast.makeText(this, "$imageName is downloaded", Toast.LENGTH_SHORT).show()
+                toast(getString(R.string.downloaded_file, imageName))
             }) {
-                Toast.makeText(this, "Something went wrong while loading, try again later!", Toast.LENGTH_SHORT).show()
+                toast(R.string.something_error)
             }
         }
     }

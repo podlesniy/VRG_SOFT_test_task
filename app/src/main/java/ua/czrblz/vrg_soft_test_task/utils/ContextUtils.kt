@@ -3,6 +3,7 @@ package ua.czrblz.vrg_soft_test_task.utils
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.widget.Toast
 
 fun Context.hasNetworkConnection(): Boolean {
     val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -15,4 +16,12 @@ fun Context.hasNetworkConnection(): Boolean {
         actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
         else -> false
     }
+}
+
+fun Context.toast(stringResource: Int) {
+    Toast.makeText(this, stringResource, Toast.LENGTH_SHORT).show()
+}
+
+fun Context.toast(string: String) {
+    Toast.makeText(this, string, Toast.LENGTH_SHORT).show()
 }
