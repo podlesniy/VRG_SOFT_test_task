@@ -19,7 +19,7 @@ class PostsPagingSource(
         return try {
             val response = apiService.getTopPosts(POSTS_LIMIT, params.key)
             val responseData = response.body()?.data?.children ?: emptyList()
-            val nextKey: String = responseData.last().data.name
+            val nextKey: String = responseData.last().data.postName
             LoadResult.Page(data = responseData, null, nextKey)
         } catch (exception: Exception) {
             LoadResult.Error(exception)

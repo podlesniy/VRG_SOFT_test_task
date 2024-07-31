@@ -15,11 +15,8 @@ class PostsRepositoryImpl(
 ): PostsRepository {
 
     private val scope = CoroutineScope(Dispatchers.IO)
-
-    private fun getPostsForPaging() =
-        Pager(PagingConfig(pageSize = POSTS_LIMIT)) {
-            PostsPagingSource(apiService)
-        }.flow.cachedIn(scope)
-
-    override fun getTopPosts() = getPostsForPaging()
+    
+    override fun getTopPosts() = Pager(PagingConfig(pageSize = POSTS_LIMIT)) {
+        PostsPagingSource(apiService)
+    }.flow.cachedIn(scope)
 }

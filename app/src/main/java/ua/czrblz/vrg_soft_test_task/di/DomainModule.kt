@@ -6,13 +6,13 @@ import ua.czrblz.domain.usecase.GetTopPostsUseCase
 
 val domainModule = module {
 
-    single {
+    single<GetTopPostsUseCase> {
         GetTopPostsUseCase(
             get()
         )
     }
 
-    single {
+    single<SavePictureInGalleryUseCase> {
         SavePictureInGalleryUseCase(
             get(),
             get()

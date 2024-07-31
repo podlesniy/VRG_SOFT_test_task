@@ -26,8 +26,8 @@ class MainViewModel(
 
     init {
         viewModelScope.launch {
-            getTopPostsUseCase.execute().collect {
-                _data.value = it
+            getTopPostsUseCase.execute().collect { pagingData ->
+                _data.value = pagingData
             }
         }
     }

@@ -6,12 +6,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
 import androidx.fragment.app.DialogFragment
-import ua.czrblz.vrg_soft_test_task.utils.loadPictureInLargeFormat
 import ua.czrblz.vrg_soft_test_task.databinding.FragmentPictureDialogBinding
 import ua.czrblz.vrg_soft_test_task.listener.SavePictureListener
-import ua.czrblz.vrg_soft_test_task.utils.listOfImageExtensions
+import ua.czrblz.vrg_soft_test_task.utils.isInListOfImageExtensions
+import ua.czrblz.vrg_soft_test_task.utils.loadPictureInLargeFormat
 
 class PictureDialogFragment : DialogFragment() {
 
@@ -51,7 +50,6 @@ class PictureDialogFragment : DialogFragment() {
 
         if (dialog != null && dialog?.window != null) {
             dialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            dialog?.window?.requestFeature(Window.FEATURE_NO_TITLE)
         }
 
         _binding = FragmentPictureDialogBinding.inflate(inflater, container, false)
@@ -59,25 +57,27 @@ class PictureDialogFragment : DialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val thumbnailUrl = arguments?.getString(THUMBNAIL_URL)
         arguments?.getString(IMAGE_URL)?.let { imageUrl ->
-            with(binding) {
-                closeButton.setOnClickListener {
-                    dialog?.dismiss()
-                }
-                downloadButton.setOnClickListener {
-                    listener?.savePicture(imageUrl)
-                }
-                if (imageUrl.split(".").last() in listOfImageExtensions) {
-                    image.loadPictureInLargeFormat(imageUrl)
-                } else {
-                    thumbnailUrl?.let {
-                        image.loadPictureInLargeFormat(it)
+            arguments?.getString(THUMBNAIL_URL)?.let { thumbnailUrl ->
+                with(binding) {
+                    val currentPicture = if (imageUrl.isInListOfImageExtensions())
+                        imageUrl
+                     else
+                        thumbnailUrl
+                    image.loadPictureInLargeFormat(currentPicture)
+                    downloadButton.setOnClickListener {
+                        listener?.savePicture(currentPicture)
+                    }
+                    closeButton.setOnClickListener {
+                        dialog?.dismiss()
                     }
                 }
-
             }
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
+    }
 }

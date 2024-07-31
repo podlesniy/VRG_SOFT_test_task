@@ -6,7 +6,7 @@ import ua.czrblz.vrg_soft_test_task.MainViewModel
 
 val appModule = module {
 
-    viewModel {
+    viewModel<MainViewModel> {
         MainViewModel(
             get(),
             get()

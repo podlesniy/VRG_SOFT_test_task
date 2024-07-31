@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.ocpsoft.prettytime)
     implementation (libs.glide)
     annotationProcessor(libs.compiler)
+    implementation(libs.photoview)
 
     implementation (project(":network"))
     implementation (project(":domain"))
