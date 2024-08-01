@@ -173,6 +173,6 @@ class MainActivity : AppCompatActivity(), OpenPictureListener, SavePictureListen
 
     override fun onDestroy() {
         super.onDestroy()
-        registerReceiver(internetConnectionReceiver, IntentFilter(CONNECTIVITY_ACTION))
+        unregisterReceiver(internetConnectionReceiver)
     }
 }
